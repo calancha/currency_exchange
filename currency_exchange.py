@@ -9,7 +9,7 @@ class CurrencyExchange(object):
   Retrieve current exchange betwee currency couples.
   """
   def __init__(self, *args):
-    self.api_key = ''
+    self.api_key = None
     self.debug = False
     self.currency_pairs = []
     self.uri_end_point = "https://forex.1forge.com/1.0.3/quotes"
@@ -27,12 +27,18 @@ class CurrencyExchange(object):
           print "[DEBUG] Include header in csv file"
 
   def parse_arguments(self, args):
+    if not args:
+      usage()
+      sys.exit(0)
     try:
-      long_options = ['pairs=', 'api_key=', 'debug', 'include-csv-headers']
-      opts, positional_args = getopt.gnu_getopt(args, 'p:k:di', long_options)
+      long_options = ['help', 'pairs=', 'api_key=', 'debug', 'include-csv-headers']
+      opts, positional_args = getopt.gnu_getopt(args, 'hp:k:di', long_options)
     except getopt.GetoptError as err:
       user_error(str(err))
     for opt, arg in opts:
+      if opt in ['-h', '--help']:
+        usage()
+        sys.exit(0)
       if opt in ['-k', '--api_key']:
         self.api_key = arg
       elif opt in ['-p', '--pairs']:
@@ -44,6 +50,10 @@ class CurrencyExchange(object):
         self.include_csv_headers = True
       else:
         assert False, "Unhandled option"
+    if not self.api_key:
+      user_error('Missing argument api_key')
+    if not self.currency_pairs:
+      user_error('Missing argument pairs')
     # Remaining args only can be an output filename.  Take the first one
     # and ignore the rest.
     if positional_args:
@@ -126,8 +136,8 @@ output.csv: A local filename where to write the output.
 
 
 if __name__ == '__main__':
-  if len(sys.argv) < 2:
-    user_error()
+  # if len(sys.argv) < 2:
+    # user_error()
   cur_exchange = CurrencyExchange(*sys.argv[1:])
   json = cur_exchange.do_http_request()
   if cur_exchange.output_file:
